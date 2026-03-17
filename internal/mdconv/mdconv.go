@@ -158,14 +158,7 @@ func convertInline(n ast.Node, source []byte) []any {
 		}
 		var result []any
 		if t != "" {
-			nd := node{
-				"type": "text",
-				"text": t,
-			}
-			if n.SoftLineBreak() {
-				nd["text"] = t + "\n"
-			}
-			result = append(result, nd)
+			result = append(result, node{"type": "text", "text": t})
 		}
 		if n.HardLineBreak() {
 			result = append(result, node{"type": "hardBreak"})
