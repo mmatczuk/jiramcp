@@ -1,0 +1,23 @@
+version: '3'
+
+tasks:
+  fmt:
+    desc: Format code and tidy modules
+    cmds:
+      - golangci-lint fmt ./...
+      - go mod tidy
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run ./...
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  build:
+    desc: Build the MCP server binary
+    cmds:
+      - go build -o bin/jiramcp ./cmd/jiramcp
