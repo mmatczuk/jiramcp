@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	jira "github.com/andygrunwald/go-jira"
@@ -64,7 +65,6 @@ func (c *Client) GetIssue(ctx context.Context, key string, opts *jira.GetQueryOp
 		var resp *jira.Response
 		var err error
 		issue, resp, err = c.J.Issue.GetWithContext(ctx, key, opts)
-		defer closeResp(resp)
 		return resp, err
 	})
 	return issue, err
@@ -113,7 +113,6 @@ func (c *Client) CreateIssue(ctx context.Context, issue *jira.Issue) (*jira.Issu
 		var resp *jira.Response
 		var err error
 		created, resp, err = c.J.Issue.CreateWithContext(ctx, issue)
-		defer closeResp(resp)
 		return resp, err
 	})
 	return created, err
@@ -123,7 +122,6 @@ func (c *Client) CreateIssue(ctx context.Context, issue *jira.Issue) (*jira.Issu
 func (c *Client) UpdateIssue(ctx context.Context, issue *jira.Issue) error {
 	return c.retry(ctx, func() (*jira.Response, error) {
 		_, resp, err := c.J.Issue.UpdateWithContext(ctx, issue)
-		defer closeResp(resp)
 		return resp, err
 	})
 }
@@ -132,7 +130,6 @@ func (c *Client) UpdateIssue(ctx context.Context, issue *jira.Issue) error {
 func (c *Client) DeleteIssue(ctx context.Context, key string) error {
 	return c.retry(ctx, func() (*jira.Response, error) {
 		resp, err := c.J.Issue.DeleteWithContext(ctx, key)
-		defer closeResp(resp)
 		return resp, err
 	})
 }
@@ -144,7 +141,6 @@ func (c *Client) GetTransitions(ctx context.Context, key string) ([]jira.Transit
 		var resp *jira.Response
 		var err error
 		transitions, resp, err = c.J.Issue.GetTransitionsWithContext(ctx, key)
-		defer closeResp(resp)
 		return resp, err
 	})
 	return transitions, err
@@ -154,7 +150,6 @@ func (c *Client) GetTransitions(ctx context.Context, key string) ([]jira.Transit
 func (c *Client) DoTransition(ctx context.Context, key, transitionID string) error {
 	return c.retry(ctx, func() (*jira.Response, error) {
 		resp, err := c.J.Issue.DoTransitionWithContext(ctx, key, transitionID)
-		defer closeResp(resp)
 		return resp, err
 	})
 }
@@ -191,7 +186,6 @@ func (c *Client) UpdateComment(ctx context.Context, key, commentID string, body 
 			return nil, err
 		}
 		resp, err := c.J.Do(req, nil)
-		defer closeResp(resp)
 		return resp, err
 	})
 }
@@ -235,7 +229,6 @@ func (c *Client) GetSprintIssues(ctx context.Context, sprintID int) ([]jira.Issu
 		var resp *jira.Response
 		var err error
 		issues, resp, err = c.J.Sprint.GetIssuesForSprintWithContext(ctx, sprintID)
-		defer closeResp(resp)
 		return resp, err
 	})
 	return issues, err
@@ -245,7 +238,6 @@ func (c *Client) GetSprintIssues(ctx context.Context, sprintID int) ([]jira.Issu
 func (c *Client) MoveIssuesToSprint(ctx context.Context, sprintID int, issueKeys []string) error {
 	return c.retry(ctx, func() (*jira.Response, error) {
 		resp, err := c.J.Sprint.MoveIssuesToSprintWithContext(ctx, sprintID, issueKeys)
-		defer closeResp(resp)
 		return resp, err
 	})
 }
@@ -257,7 +249,6 @@ func (c *Client) GetAllProjects(ctx context.Context) (*jira.ProjectList, error) 
 		var resp *jira.Response
 		var err error
 		projects, resp, err = c.J.Project.ListWithOptionsWithContext(ctx, &jira.GetQueryOptions{})
-		defer closeResp(resp)
 		return resp, err
 	})
 	return projects, err
@@ -270,7 +261,6 @@ func (c *Client) GetFields(ctx context.Context) ([]jira.Field, error) {
 		var resp *jira.Response
 		var err error
 		fields, resp, err = c.J.Field.GetListWithContext(ctx)
-		defer closeResp(resp)
 		return resp, err
 	})
 	return fields, err
@@ -284,7 +274,6 @@ func (c *Client) DoRaw(ctx context.Context, method, path string, body any, resul
 			return nil, err
 		}
 		resp, err := c.J.Do(req, result)
-		defer closeResp(resp)
 		return resp, err
 	})
 }
@@ -320,7 +309,6 @@ func (c *Client) UpdateIssueV3(ctx context.Context, key string, payload map[stri
 			return nil, err
 		}
 		resp, err := c.J.Do(req, nil)
-		defer closeResp(resp)
 		return resp, err
 	})
 }
@@ -359,7 +347,6 @@ func (c *Client) GetFieldOptions(ctx context.Context, fieldID string) ([]json.Ra
 			Values []json.RawMessage `json:"values"`
 		}
 		optResp, err := c.J.Do(optReq, &optResult)
-		defer closeResp(optResp)
 		values = optResult.Values
 		return optResp, err
 	})
@@ -385,18 +372,51 @@ func (c *Client) backoff(attempt int, retryAfter time.Duration) time.Duration {
 	return c.cfg.BaseDelay * time.Duration(math.Pow(2, float64(attempt)))
 }
 
+// enrichError reads the JIRA response body and wraps the original error with
+// the API error details. This is needed because go-jira's CheckResponse only
+// includes the status code, discarding the body that contains the actual error
+// messages from JIRA.
+func enrichError(resp *jira.Response, original error) error {
+	if resp == nil || resp.Body == nil {
+		return original
+	}
+
+	// Try to parse as JIRA error JSON.
+	var jiraErr jira.Error
+	if err := json.NewDecoder(resp.Body).Decode(&jiraErr); err != nil {
+		return original
+	}
+
+	var parts []string
+	for _, msg := range jiraErr.ErrorMessages {
+		parts = append(parts, msg)
+	}
+	for field, msg := range jiraErr.Errors {
+		parts = append(parts, fmt.Sprintf("%s: %s", field, msg))
+	}
+	if len(parts) == 0 {
+		return original
+	}
+
+	return fmt.Errorf("%w: %s", original, strings.Join(parts, "; "))
+}
+
 func (c *Client) retry(ctx context.Context, fn func() (*jira.Response, error)) error {
 	for attempt := range c.cfg.MaxRetries + 1 {
 		resp, err := fn()
 		if err == nil {
+			closeResp(resp)
 			return nil
 		}
 
 		retryAfter, shouldRetry := c.shouldRetry(resp)
 		if !shouldRetry || attempt == c.cfg.MaxRetries {
-			return err
+			enriched := enrichError(resp, err)
+			closeResp(resp)
+			return enriched
 		}
 
+		closeResp(resp)
 		delay := c.backoff(attempt, retryAfter)
 		select {
 		case <-ctx.Done():
