@@ -290,9 +290,10 @@ func (c *Client) UpdateIssueV3(ctx context.Context, key string, payload map[stri
 	})
 }
 
-// GetFieldOptions returns options for a custom field.
+// GetFieldOptions returns options for a custom field, aggregated across all contexts.
 func (c *Client) GetFieldOptions(ctx context.Context, fieldID string) ([]json.RawMessage, error) {
-	var values []json.RawMessage
+	// Fetch all contexts for the field.
+	var contextIDs []string
 	err := c.retry(ctx, func() (*jira.Response, error) {
 		path := fmt.Sprintf("rest/api/3/field/%s/context", fieldID)
 		req, err := c.j.NewRequestWithContext(ctx, "GET", path, nil)
@@ -308,25 +309,48 @@ func (c *Client) GetFieldOptions(ctx context.Context, fieldID string) ([]json.Ra
 		if err != nil {
 			return resp, err
 		}
-		// Get options from the first context.
-		if len(ctxResult.Values) == 0 {
-			return resp, nil
+		for _, v := range ctxResult.Values {
+			contextIDs = append(contextIDs, v.ID)
 		}
-		contextID := ctxResult.Values[0].ID
+		return resp, nil
+	})
+	if err != nil {
+		return nil, err
+	}
 
-		optPath := fmt.Sprintf("rest/api/3/field/%s/context/%s/option", fieldID, contextID)
-		optReq, err := c.j.NewRequestWithContext(ctx, "GET", optPath, nil)
+	// Fetch options from each context, deduplicating by id.
+	seen := make(map[string]bool)
+	var values []json.RawMessage
+	for _, contextID := range contextIDs {
+		err := c.retry(ctx, func() (*jira.Response, error) {
+			optPath := fmt.Sprintf("rest/api/3/field/%s/context/%s/option", fieldID, contextID)
+			optReq, err := c.j.NewRequestWithContext(ctx, "GET", optPath, nil)
+			if err != nil {
+				return nil, err
+			}
+			var optResult struct {
+				Values []json.RawMessage `json:"values"`
+			}
+			resp, err := c.j.Do(optReq, &optResult)
+			if err != nil {
+				return resp, err
+			}
+			for _, raw := range optResult.Values {
+				var id struct {
+					ID string `json:"id"`
+				}
+				if jsonErr := json.Unmarshal(raw, &id); jsonErr == nil && !seen[id.ID] {
+					seen[id.ID] = true
+					values = append(values, raw)
+				}
+			}
+			return resp, nil
+		})
 		if err != nil {
 			return nil, err
 		}
-		var optResult struct {
-			Values []json.RawMessage `json:"values"`
-		}
-		optResp, err := c.j.Do(optReq, &optResult)
-		values = optResult.Values
-		return optResp, err
-	})
-	return values, err
+	}
+	return values, nil
 }
 
 func (c *Client) shouldRetry(resp *jira.Response) (time.Duration, bool) {
