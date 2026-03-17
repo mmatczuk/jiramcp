@@ -12,29 +12,29 @@ import (
 )
 
 type WriteItem struct {
-	Key         string   `json:"key,omitempty" jsonschema:"description=Issue key (e.g. PROJ-1). Required for update/delete/transition/comment/edit_comment."`
-	Project     string   `json:"project,omitempty" jsonschema:"description=Project key for create action."`
-	Summary     string   `json:"summary,omitempty" jsonschema:"description=Issue summary/title."`
-	IssueType   string   `json:"issue_type,omitempty" jsonschema:"description=Issue type name (e.g. Bug Task Story Epic)."`
-	Priority    string   `json:"priority,omitempty" jsonschema:"description=Priority name (e.g. High Medium Low)."`
-	Assignee    string   `json:"assignee,omitempty" jsonschema:"description=Assignee account ID."`
-	Description string   `json:"description,omitempty" jsonschema:"description=Issue description in Markdown. Auto-converted to Atlassian Document Format."`
-	Labels      []string `json:"labels,omitempty" jsonschema:"description=Issue labels."`
+	Key         string   `json:"key,omitempty" jsonschema:"Issue key (e.g. PROJ-1). Required for update/delete/transition/comment/edit_comment."`
+	Project     string   `json:"project,omitempty" jsonschema:"Project key for create action."`
+	Summary     string   `json:"summary,omitempty" jsonschema:"Issue summary/title."`
+	IssueType   string   `json:"issue_type,omitempty" jsonschema:"Issue type name (e.g. Bug, Task, Story, Epic)."`
+	Priority    string   `json:"priority,omitempty" jsonschema:"Priority name (e.g. High, Medium, Low)."`
+	Assignee    string   `json:"assignee,omitempty" jsonschema:"Assignee account ID."`
+	Description string   `json:"description,omitempty" jsonschema:"Issue description in Markdown. Auto-converted to Atlassian Document Format."`
+	Labels      []string `json:"labels,omitempty" jsonschema:"Issue labels."`
 
-	TransitionID string `json:"transition_id,omitempty" jsonschema:"description=Transition ID. Use jira_schema resource=transitions issue_key=X to find valid IDs."`
+	TransitionID string `json:"transition_id,omitempty" jsonschema:"Transition ID. Use jira_schema resource=transitions issue_key=X to find valid IDs."`
 
-	Comment   string `json:"comment,omitempty" jsonschema:"description=Comment body in Markdown. Used for comment/edit_comment and optionally with transition."`
-	CommentID string `json:"comment_id,omitempty" jsonschema:"description=Comment ID for edit_comment action."`
+	Comment   string `json:"comment,omitempty" jsonschema:"Comment body in Markdown. Used for comment/edit_comment and optionally with transition."`
+	CommentID string `json:"comment_id,omitempty" jsonschema:"Comment ID for edit_comment action."`
 
-	SprintID int `json:"sprint_id,omitempty" jsonschema:"description=Sprint ID for move_to_sprint action."`
+	SprintID int `json:"sprint_id,omitempty" jsonschema:"Sprint ID for move_to_sprint action."`
 
-	FieldsJSON string `json:"fields_json,omitempty" jsonschema:"description=Raw JSON object merged into issue fields. Escape hatch for custom fields."`
+	FieldsJSON string `json:"fields_json,omitempty" jsonschema:"Raw JSON object merged into issue fields. Escape hatch for custom fields."`
 }
 
 type WriteArgs struct {
-	Action string      `json:"action" jsonschema:"required,description=Action to perform.,enum=create,enum=update,enum=delete,enum=transition,enum=comment,enum=edit_comment,enum=move_to_sprint"`
-	Items  []WriteItem `json:"items" jsonschema:"required,description=Array of items to process. Even a single operation should be wrapped in an array."`
-	DryRun bool        `json:"dry_run,omitempty" jsonschema:"description=Preview changes without applying them. Default false."`
+	Action string      `json:"action" jsonschema:"Action: create, update, delete, transition, comment, edit_comment, move_to_sprint."`
+	Items  []WriteItem `json:"items" jsonschema:"Array of items to process. Even a single operation should be wrapped in an array."`
+	DryRun bool        `json:"dry_run,omitempty" jsonschema:"Preview changes without applying them. Default false."`
 }
 
 var writeTool = &mcp.Tool{

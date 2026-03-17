@@ -12,23 +12,23 @@ import (
 )
 
 type ReadArgs struct {
-	Keys []string `json:"keys,omitempty" jsonschema:"description=Issue keys to fetch (e.g. PROJ-1). Mutually exclusive with jql and resource."`
+	Keys []string `json:"keys,omitempty" jsonschema:"Issue keys to fetch (e.g. PROJ-1). Mutually exclusive with jql and resource."`
 
-	JQL string `json:"jql,omitempty" jsonschema:"description=JQL search query. Mutually exclusive with keys and resource."`
+	JQL string `json:"jql,omitempty" jsonschema:"JQL search query. Mutually exclusive with keys and resource."`
 
-	Resource string `json:"resource,omitempty" jsonschema:"description=Resource to list: projects boards sprints sprint_issues. Mutually exclusive with keys and jql.,enum=projects,enum=boards,enum=sprints,enum=sprint_issues"`
+	Resource string `json:"resource,omitempty" jsonschema:"Resource to list: projects, boards, sprints, sprint_issues. Mutually exclusive with keys and jql."`
 
-	BoardID     int    `json:"board_id,omitempty" jsonschema:"description=Board ID — required for resource=sprints."`
-	SprintID    int    `json:"sprint_id,omitempty" jsonschema:"description=Sprint ID — required for resource=sprint_issues."`
-	ProjectKey  string `json:"project_key,omitempty" jsonschema:"description=Filter boards by project key."`
-	BoardName   string `json:"board_name,omitempty" jsonschema:"description=Filter boards by name substring."`
-	BoardType   string `json:"board_type,omitempty" jsonschema:"description=Filter boards by type.,enum=scrum,enum=kanban"`
-	SprintState string `json:"sprint_state,omitempty" jsonschema:"description=Filter sprints by state.,enum=active,enum=closed,enum=future"`
+	BoardID     int    `json:"board_id,omitempty" jsonschema:"Board ID. Required for resource=sprints."`
+	SprintID    int    `json:"sprint_id,omitempty" jsonschema:"Sprint ID. Required for resource=sprint_issues."`
+	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Filter boards by project key."`
+	BoardName   string `json:"board_name,omitempty" jsonschema:"Filter boards by name substring."`
+	BoardType   string `json:"board_type,omitempty" jsonschema:"Filter boards by type: scrum, kanban."`
+	SprintState string `json:"sprint_state,omitempty" jsonschema:"Filter sprints by state: active, closed, future."`
 
-	Fields  string `json:"fields,omitempty" jsonschema:"description=Comma-separated field names to return (default: all)."`
-	Expand  string `json:"expand,omitempty" jsonschema:"description=Comma-separated expansions (e.g. renderedFields transitions changelog)."`
-	Limit   int    `json:"limit,omitempty" jsonschema:"description=Max results to return. Default 100."`
-	StartAt int    `json:"start_at,omitempty" jsonschema:"description=Pagination offset. Default 0."`
+	Fields  string `json:"fields,omitempty" jsonschema:"Comma-separated field names to return (default: all)."`
+	Expand  string `json:"expand,omitempty" jsonschema:"Comma-separated expansions (e.g. renderedFields transitions changelog)."`
+	Limit   int    `json:"limit,omitempty" jsonschema:"Max results to return. Default 100."`
+	StartAt int    `json:"start_at,omitempty" jsonschema:"Pagination offset. Default 0."`
 }
 
 var readTool = &mcp.Tool{
