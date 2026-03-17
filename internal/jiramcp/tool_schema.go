@@ -9,11 +9,9 @@ import (
 )
 
 type SchemaArgs struct {
-	Resource   string `json:"resource" jsonschema:"Metadata to discover: fields, transitions, field_options."`
-	IssueKey   string `json:"issue_key,omitempty" jsonschema:"Issue key. Required for resource=transitions."`
-	FieldID    string `json:"field_id,omitempty" jsonschema:"Field ID. Required for resource=field_options (e.g. customfield_10001)."`
-	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project key. Context for field_options."`
-	IssueType  string `json:"issue_type,omitempty" jsonschema:"Issue type name. Context for field_options."`
+	Resource string `json:"resource" jsonschema:"Metadata to discover: fields, transitions, field_options."`
+	IssueKey string `json:"issue_key,omitempty" jsonschema:"Issue key. Required for resource=transitions."`
+	FieldID  string `json:"field_id,omitempty" jsonschema:"Field ID. Required for resource=field_options (e.g. customfield_10001)."`
 }
 
 var schemaTool = &mcp.Tool{
