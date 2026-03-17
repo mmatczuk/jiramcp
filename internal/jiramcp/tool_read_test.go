@@ -77,10 +77,16 @@ func TestReadByKeys_PassesFieldsAndExpand(t *testing.T) {
 
 func TestReadByKeys_MultipleKeys(t *testing.T) {
 	mc := &mockClient{
-		GetIssueFn: func(_ context.Context, key string, _ *jira.GetQueryOptions) (*jira.Issue, error) {
-			return &jira.Issue{
-				Key:    key,
-				Fields: &jira.IssueFields{Summary: "Issue " + key},
+		SearchIssuesFn: func(_ context.Context, jql string, opts *jira.SearchOptionsV3) (*jira.SearchResultV3, error) {
+			assert.Contains(t, jql, "issueKey in")
+			assert.Contains(t, jql, "A-1")
+			assert.Contains(t, jql, "B-2")
+			return &jira.SearchResultV3{
+				Issues: []jira.Issue{
+					{Key: "A-1", Fields: &jira.IssueFields{Summary: "Issue A-1"}},
+					{Key: "B-2", Fields: &jira.IssueFields{Summary: "Issue B-2"}},
+				},
+				Total: 2,
 			}, nil
 		},
 	}
@@ -91,14 +97,15 @@ func TestReadByKeys_MultipleKeys(t *testing.T) {
 }
 
 func TestReadByKeys_PartialError(t *testing.T) {
+	// With 2 keys, the JQL path is used; JIRA simply omits unknown keys.
 	mc := &mockClient{
-		GetIssueFn: func(_ context.Context, key string, _ *jira.GetQueryOptions) (*jira.Issue, error) {
-			if key == "BAD-1" {
-				return nil, fmt.Errorf("not found")
-			}
-			return &jira.Issue{
-				Key:    key,
-				Fields: &jira.IssueFields{Summary: "ok"},
+		SearchIssuesFn: func(_ context.Context, _ string, _ *jira.SearchOptionsV3) (*jira.SearchResultV3, error) {
+			// JIRA returns only the issues that exist; BAD-1 is silently absent.
+			return &jira.SearchResultV3{
+				Issues: []jira.Issue{
+					{Key: "GOOD-1", Fields: &jira.IssueFields{Summary: "ok"}},
+				},
+				Total: 1,
 			}, nil
 		},
 	}
@@ -106,8 +113,7 @@ func TestReadByKeys_PartialError(t *testing.T) {
 	text, isErr := callRead(t, h, ReadArgs{Keys: []string{"GOOD-1", "BAD-1"}})
 	assert.False(t, isErr)
 	assert.Contains(t, text, "Fetched 1 issue(s)")
-	assert.Contains(t, text, "BAD-1")
-	assert.Contains(t, text, "not found")
+	assert.Contains(t, text, "GOOD-1")
 }
 
 func TestReadByKeys_AllError(t *testing.T) {

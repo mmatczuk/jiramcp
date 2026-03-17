@@ -78,27 +78,50 @@ func (h *handlers) handleRead(ctx context.Context, _ *mcp.CallToolRequest, args 
 }
 
 func (h *handlers) readByKeys(ctx context.Context, args ReadArgs) *mcp.CallToolResult {
-	opts := &jira.GetQueryOptions{}
+	// For a single key use GetIssue (supports Expand, richer fields).
+	// For 2+ keys use a JQL search to reduce API calls.
+	if len(args.Keys) == 1 {
+		opts := &jira.GetQueryOptions{}
+		if args.Fields != "" {
+			opts.Fields = args.Fields
+		}
+		if args.Expand != "" {
+			opts.Expand = args.Expand
+		}
+		issue, err := h.client.GetIssue(ctx, args.Keys[0], opts)
+		if err != nil {
+			return formatReadResult("Fetched 0 issue(s)", nil, []string{fmt.Sprintf("%s: %v", args.Keys[0], err)})
+		}
+		return formatReadResult("Fetched 1 issue(s)", []map[string]any{issueToMap(issue)}, nil)
+	}
+
+	// Build issueKey in (...) JQL for multi-key fetch.
+	quoted := make([]string, len(args.Keys))
+	for i, k := range args.Keys {
+		quoted[i] = fmt.Sprintf("%q", k)
+	}
+	jql := fmt.Sprintf("issueKey in (%s)", strings.Join(quoted, ", "))
+
+	opts := &jira.SearchOptionsV3{MaxResults: len(args.Keys)}
 	if args.Fields != "" {
-		opts.Fields = args.Fields
+		for _, f := range strings.Split(args.Fields, ",") {
+			opts.Fields = append(opts.Fields, strings.TrimSpace(f))
+		}
 	}
 	if args.Expand != "" {
 		opts.Expand = args.Expand
 	}
 
-	var results []map[string]any
-	var errors []string
-
-	for _, key := range args.Keys {
-		issue, err := h.client.GetIssue(ctx, key, opts)
-		if err != nil {
-			errors = append(errors, fmt.Sprintf("%s: %v", key, err))
-			continue
-		}
-		results = append(results, issueToMap(issue))
+	sr, err := h.client.SearchIssues(ctx, jql, opts)
+	if err != nil {
+		return textResult(fmt.Sprintf("Failed to fetch issues %v: %v", args.Keys, err), true)
 	}
 
-	return formatReadResult(fmt.Sprintf("Fetched %d issue(s)", len(results)), results, errors)
+	var results []map[string]any
+	for i := range sr.Issues {
+		results = append(results, issueToMap(&sr.Issues[i]))
+	}
+	return formatReadResult(fmt.Sprintf("Fetched %d issue(s)", len(results)), results, nil)
 }
 
 func (h *handlers) readByJQL(ctx context.Context, args ReadArgs) *mcp.CallToolResult {
