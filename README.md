@@ -1,20 +1,48 @@
-# JIRA MCP
+# Jira MCP
 
-Give your AI assistant full JIRA access without burning half its context window on tool selection.
+Give your AI agent full Jira access with just 3 tools.
 
-Most JIRA MCPs expose too many tools. Every time the model picks one, it spends tokens deciding between `jira_get_issue`, `jira_fetch_issue`, `jira_issue_get`...
+Most Jira MCPs dump their entire API surface into the model's context. The agent wastes tokens picking between `jira_get_issue`, `jira_fetch_issue`, `jira_issue_get`... and still gets it wrong.
 
-`jira-mcp` has three:
+jira-mcp gives the model exactly what it needs:
 
 | Tool | What it does |
 |---|---|
 | `jira_read` | Fetch issues by key, search by JQL, list projects/boards/sprints |
-| `jira_write` | Create, update, delete, transition, comment — accepts Markdown, converts to Atlassian format; supports `dry_run` to preview changes before committing |
+| `jira_write` | Create, update, delete, transition, comment — accepts Markdown, supports `dry_run` |
 | `jira_schema` | Discover fields, transitions, and allowed values |
 
-Less tool surface area means more of the context window goes to your actual work. The model makes fewer wrong choices, calls fewer redundant tools, and gets to the answer faster. The three tools compose naturally: schema to discover, read to find, write to change.
+Three tools that compose naturally: schema to discover, read to find, write to change. Less surface area means fewer wrong picks, fewer redundant calls, more context for your actual work.
 
-Your API token never leaves your machine. `jira-mcp` runs as a local process over stdio — no server to host, no proxy in the middle, no credentials sent anywhere except directly to Atlassian.
+**Your credentials stay on your machine.** jira-mcp runs as a local process over stdio — no server, no proxy, nothing between your agent and Atlassian.
+
+## Compared to [mcp-atlassian](https://github.com/sooperset/mcp-atlassian)
+
+mcp-atlassian is a full Atlassian suite — 72 tools, Confluence, OAuth, SSE transport. That's powerful, and it's the right pick if you need all of it.
+
+jira-mcp does one thing: Jira. And it does it with as little friction as possible.
+
+**Why that matters for your agent:**
+- **3 tools, not 72** — less context burned, sharper focus, fewer hallucinated tool calls
+- **Zero runtime dependencies** — single Go binary, no Python, no venv, no pip
+- **Works out of the box** — API token auth, stdio transport, ship it
+
+Use mcp-atlassian if you need Confluence, OAuth, or SSE. Use jira-mcp if you want Jira to just work.
+
+## Compared to [acli](https://developer.atlassian.com/cloud/acli/guides/introduction/)
+
+acli is great for humans typing commands in a terminal. jira-mcp is built for AI agents — and that difference matters.
+
+When you give an AI shell access, it can do anything: delete users, change org settings, trigger [Rovodev](https://www.atlassian.com/software/rovo/dev). jira-mcp limits the blast radius to Jira. Structured tool calls instead of shell execution means no injection risk, no accidental admin actions, and a model that stays in its lane.
+
+**jira-mcp gives your AI agent:**
+- **Safety by default** — no shell injection risk, Jira-only blast radius
+- **Native Markdown** — write comments and descriptions in Markdown, it converts automatically
+- **Built-in dry run** — preview every write before it happens
+- **Lean context** — 3 tools vs. the full CLI surface; your agent stays focused
+- **One-line read-only mode** — just instruct the model to use `jira_read` only, no extra tokens needed
+
+Use acli when a human is at the keyboard or when you need Admin/Rovodev operations. Use jira-mcp when an AI agent is driving.
 
 ## Quick start
 
@@ -88,41 +116,40 @@ claude mcp add-json jira '{
 
 ### 3. Verify it works
 
-Ask Claude: *"List my JIRA projects"* — if you see your projects, you're good.
+First, confirm Claude Code picked up the server:
+
+```bash
+claude mcp list
+```
+
+You should see:
+
+```
+Checking MCP server health...
+
+jira: jira-mcp - ✓ Connected
+```
+
+Then open a Claude Code session and ask: *"List my Jira projects"*:
+
+```
+❯ List my Jira projects
+
+⏺ jira - jira_read (MCP)(resource: "projects")
+  ⎿  Found 3 project(s)
+
+⏺ 3 projects:
+
+  - ACME — Acme Corp
+  - PLAT — Platform
+  - OPS — Operations
+```
+
+If you see your projects, you're set. If not, check the server logs for errors and verify your credentials.
 
 ### Other MCP clients
 
 Use the same binary and env vars. The server speaks standard MCP over stdio.
-
-## Compared to [mcp-atlassian](https://github.com/sooperset/mcp-atlassian)
-
-| | jira-mcp | mcp-atlassian |
-|---|---|---|
-| Tools | 3 | 72 |
-| Runtime | Go binary | Python |
-| Scope | Jira | Jira + Confluence |
-| Auth | API token | API token, OAuth 2.0, PAT |
-| Transport | stdio (local only) | stdio, SSE |
-
-mcp-atlassian is the right choice if you need Confluence or OAuth. jira-mcp is for people who want Jira to just work, with minimal overhead on the model.
-
-## Compared to [acli](https://developer.atlassian.com/cloud/acli/guides/introduction/)
-
-acli is Atlassian's official CLI for humans running terminal commands. For AI-driven Jira automation, jira-mcp is safer: structured tool calls instead of shell execution, no risk of shell injection, and blast radius limited to Jira — the model can never touch user management or org settings.
-
-| | jira-mcp | acli via bash |
-|---|---|---|
-| Integration | MCP tool (structured calls) | Shell command execution |
-| Shell injection risk | None | Possible |
-| Read-only mode | Instruct model to use `jira_read` only | Requires separate read-only API token |
-| Blast radius | Jira only | Jira + Admin (user deletion, org settings) + Rovodev |
-| Markdown input | Native (converts to Atlassian format) | None |
-| Dry run | Built-in | None |
-| Output format | Structured JSON | Text — requires parsing |
-| Context cost | 3 tools | Full CLI surface (commands + flags) |
-| Maintained by | Community | Atlassian |
-
-acli is the right choice for human-driven terminal workflows or when you need Admin/Rovodev operations. jira-mcp is for AI-driven Jira automation.
 
 ## License
 
