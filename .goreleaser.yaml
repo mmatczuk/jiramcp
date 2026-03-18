@@ -1,0 +1,77 @@
+version: 2
+
+project_name: jira-mcp
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: jira-mcp
+    binary: jira-mcp
+    main: ./cmd/jira-mcp
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: jira-mcp
+    ids:
+      - jira-mcp
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+# Use GitHub native release notes (same as "Auto-generate release notes" on GitHub).
+changelog:
+  use: github
+
+# Homebrew cask published to Formula/ directory in this repo.
+# Install: brew tap mmatczuk/jira-mcp https://github.com/mmatczuk/jira-mcp
+#          brew install jira-mcp
+homebrew_casks:
+  - name: jira-mcp
+    ids:
+      - jira-mcp
+    binaries:
+      - jira-mcp
+    directory: Casks
+    repository:
+      owner: mmatczuk
+      name: jira-mcp
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    homepage: https://github.com/mmatczuk/jira-mcp
+    description: JIRA MCP server — give your AI assistant full JIRA access
+    license: MIT
+
+# Multi-arch Docker image pushed to Docker Hub as :latest only.
+dockers_v2:
+  - id: jira-mcp
+    ids:
+      - jira-mcp
+    dockerfile: Dockerfile
+    images:
+      - mmatczuk/jira-mcp
+    tags:
+      - latest
+    platforms:
+      - linux/amd64
+      - linux/arm64
