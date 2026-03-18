@@ -106,6 +106,24 @@ Use the same binary and env vars. The server speaks standard MCP over stdio.
 
 mcp-atlassian is the right choice if you need Confluence or OAuth. jira-mcp is for people who want Jira to just work, with minimal overhead on the model.
 
+## Compared to [acli](https://developer.atlassian.com/cloud/acli/guides/introduction/)
+
+acli is Atlassian's official CLI for humans running terminal commands. For AI-driven Jira automation, jira-mcp is safer: structured tool calls instead of shell execution, no risk of shell injection, and blast radius limited to Jira — the model can never touch user management or org settings.
+
+| | jira-mcp | acli via bash |
+|---|---|---|
+| Integration | MCP tool (structured calls) | Shell command execution |
+| Shell injection risk | None | Possible |
+| Read-only mode | Instruct model to use `jira_read` only | Requires separate read-only API token |
+| Blast radius | Jira only | Jira + Admin (user deletion, org settings) + Rovodev |
+| Markdown input | Native (converts to Atlassian format) | None |
+| Dry run | Built-in | None |
+| Output format | Structured JSON | Text — requires parsing |
+| Context cost | 3 tools | Full CLI surface (commands + flags) |
+| Maintained by | Community | Atlassian |
+
+acli is the right choice for human-driven terminal workflows or when you need Admin/Rovodev operations. jira-mcp is for AI-driven Jira automation.
+
 ## License
 
 MIT
