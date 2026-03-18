@@ -4,7 +4,7 @@ Give your AI assistant full JIRA access without burning half its context window 
 
 Most JIRA MCPs expose too many tools. Every time the model picks one, it spends tokens deciding between `jira_get_issue`, `jira_fetch_issue`, `jira_issue_get`...
 
-`jiramcp` has three:
+`jira-mcp` has three:
 
 | Tool | What it does |
 |---|---|
@@ -14,11 +14,11 @@ Most JIRA MCPs expose too many tools. Every time the model picks one, it spends 
 
 Less tool surface area means more of the context window goes to your actual work. The model makes fewer wrong choices, calls fewer redundant tools, and gets to the answer faster. The three tools compose naturally: schema to discover, read to find, write to change.
 
-Your API token never leaves your machine. `jiramcp` runs as a local process over stdio — no server to host, no proxy in the middle, no credentials sent anywhere except directly to Atlassian.
+Your API token never leaves your machine. `jira-mcp` runs as a local process over stdio — no server to host, no proxy in the middle, no credentials sent anywhere except directly to Atlassian.
 
 ## Quick start
 
-**Prerequisites:** Go 1.21+ installed, a JIRA Cloud account.
+**Prerequisites:** A JIRA Cloud account with an API token.
 
 ### 1. Get an API token
 
@@ -27,15 +27,63 @@ Your API token never leaves your machine. `jiramcp` runs as a local process over
 3. Give it a label, click "Create"
 4. Copy the token immediately — you can't see it again
 
-### 2. Add to Claude Code
+### 2. Install and add to Claude Code
+
+Pick one path:
+
+**Homebrew**
 
 ```bash
-claude mcp add-json jira \
-'{"command":"go","args":["run","github.com/mmatczuk/jiramcp@latest"],"env":{\
-"JIRA_URL":"https://yourcompany.atlassian.net",\
-"JIRA_EMAIL":"you@company.com",\
-"JIRA_API_TOKEN":"your-api-token"\
-}}'
+brew tap mmatczuk/jira-mcp https://github.com/mmatczuk/jira-mcp
+brew install jira-mcp
+```
+
+```bash
+claude mcp add-json jira '{
+  "command": "jira-mcp",
+  "env": {
+    "JIRA_URL": "https://yourcompany.atlassian.net",
+    "JIRA_EMAIL": "you@company.com",
+    "JIRA_API_TOKEN": "your-api-token"
+  }
+}'
+```
+
+**Docker**
+
+No install needed. The `-e VAR` flags (without a value) forward each variable from `env` into the container:
+
+```bash
+claude mcp add-json jira '{
+  "command": "docker",
+  "args": [
+    "run", "-i", "--rm",
+    "-e", "JIRA_URL",
+    "-e", "JIRA_EMAIL",
+    "-e", "JIRA_API_TOKEN",
+    "mmatczuk/jira-mcp"
+  ],
+  "env": {
+    "JIRA_URL": "https://yourcompany.atlassian.net",
+    "JIRA_EMAIL": "you@company.com",
+    "JIRA_API_TOKEN": "your-api-token"
+  }
+}'
+```
+
+**Binary**
+
+Download the binary for your platform from the [releases page](https://github.com/mmatczuk/jira-mcp/releases) and put it on your `PATH`, then:
+
+```bash
+claude mcp add-json jira '{
+  "command": "jira-mcp",
+  "env": {
+    "JIRA_URL": "https://yourcompany.atlassian.net",
+    "JIRA_EMAIL": "you@company.com",
+    "JIRA_API_TOKEN": "your-api-token"
+  }
+}'
 ```
 
 ### 3. Verify it works
@@ -44,11 +92,11 @@ Ask Claude: *"List my JIRA projects"* — if you see your projects, you're good.
 
 ### Other MCP clients
 
-Use the same Go binary and env vars. The server speaks standard MCP over stdio.
+Use the same binary and env vars. The server speaks standard MCP over stdio.
 
 ## Compared to [mcp-atlassian](https://github.com/sooperset/mcp-atlassian)
 
-| | jiramcp | mcp-atlassian |
+| | jira-mcp | mcp-atlassian |
 |---|---|---|
 | Tools | 3 | 72 |
 | Runtime | Go binary | Python |
@@ -56,7 +104,7 @@ Use the same Go binary and env vars. The server speaks standard MCP over stdio.
 | Auth | API token | API token, OAuth 2.0, PAT |
 | Transport | stdio (local only) | stdio, SSE |
 
-mcp-atlassian is the right choice if you need Confluence or OAuth. jiramcp is for people who want Jira to just work, with minimal overhead on the model.
+mcp-atlassian is the right choice if you need Confluence or OAuth. jira-mcp is for people who want Jira to just work, with minimal overhead on the model.
 
 ## License
 
