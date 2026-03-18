@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/mmatczuk/jiramcp/internal/jira"
+	"github.com/mmatczuk/jira-mcp/internal/jira"
 )
 
 // mockClient implements JiraClient for testing. Set only the Fn fields your

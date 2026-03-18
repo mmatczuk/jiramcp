@@ -10,8 +10,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/mmatczuk/jiramcp/internal/jira"
-	"github.com/mmatczuk/jiramcp/internal/jiramcp"
+	"github.com/mmatczuk/jira-mcp/internal/jira"
+	"github.com/mmatczuk/jira-mcp/internal/jiramcp"
 )
 
 func main() {

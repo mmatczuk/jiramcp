@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/mmatczuk/jiramcp/internal/jira"
+	"github.com/mmatczuk/jira-mcp/internal/jira"
 )
 
 // JiraClient defines the Jira operations used by the MCP handlers.

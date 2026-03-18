@@ -8,7 +8,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/mmatczuk/jiramcp/internal/mdconv"
+	"github.com/mmatczuk/jira-mcp/internal/mdconv"
 )
 
 type WriteItem struct {

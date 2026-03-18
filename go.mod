@@ -1,4 +1,4 @@
-module github.com/mmatczuk/jiramcp
+module github.com/mmatczuk/jira-mcp
 
 go 1.25.0
 

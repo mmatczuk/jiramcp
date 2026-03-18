@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mmatczuk/jiramcp/internal/jira"
+	"github.com/mmatczuk/jira-mcp/internal/jira"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
