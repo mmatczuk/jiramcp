@@ -43,11 +43,15 @@ func main() {
 		log.Fatalf("Failed to create JIRA client: %v", err)
 	}
 
-	s := jiramcp.NewServer(client)
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
+	myself, err := client.GetMyself(ctx)
+	if err != nil {
+		log.Fatalf("Failed to get current user: %v", err)
+	}
+
+	s := jiramcp.NewServer(client, myself)
 	if err := s.Run(ctx, &mcp.StdioTransport{}); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}

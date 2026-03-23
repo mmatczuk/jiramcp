@@ -51,6 +51,21 @@ func New(cfg Config) (*Client, error) {
 	return &Client{j: j, cfg: cfg}, nil
 }
 
+// GetMyself returns the currently authenticated user.
+func (c *Client) GetMyself(ctx context.Context) (*jira.User, error) {
+	var user *jira.User
+	err := c.retry(ctx, func() (*jira.Response, error) {
+		req, err := c.j.NewRequestWithContext(ctx, "GET", "rest/api/3/myself", nil)
+		if err != nil {
+			return nil, err
+		}
+		user = new(jira.User)
+		resp, err := c.j.Do(req, user)
+		return resp, err
+	})
+	return user, err
+}
+
 // GetIssue fetches an issue by key.
 func (c *Client) GetIssue(ctx context.Context, key string, opts *jira.GetQueryOptions) (*jira.Issue, error) {
 	var issue *jira.Issue

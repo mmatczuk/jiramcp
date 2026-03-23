@@ -9,6 +9,7 @@ import (
 
 // JiraClient defines the Jira operations used by the MCP handlers.
 type JiraClient interface {
+	GetMyself(ctx context.Context) (*jira.User, error)
 	GetIssue(ctx context.Context, key string, opts *jira.GetQueryOptions) (*jira.Issue, error)
 	SearchIssues(ctx context.Context, jql string, opts *jira.SearchOptionsV3) (*jira.SearchResultV3, error)
 	CreateIssueV3(ctx context.Context, payload map[string]any) (string, string, error)
