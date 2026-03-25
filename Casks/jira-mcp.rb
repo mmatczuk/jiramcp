@@ -3,7 +3,7 @@ cask "jira-mcp" do
   name "jira-mcp"
   desc "JIRA MCP server — give your AI assistant full JIRA access"
   homepage "https://github.com/mmatczuk/jira-mcp"
-  version "0.2.0"
+  version "0.3.0"
 
   livecheck do
     skip "Auto-generated on release."
@@ -14,22 +14,22 @@ cask "jira-mcp" do
   on_macos do
     on_intel do
       url "https://github.com/mmatczuk/jira-mcp/releases/download/v#{version}/jira-mcp_darwin_amd64.tar.gz"
-      sha256 "b5bd37028499d0dad7233992a70ee0f0e8657b3b20175f0f7ceb6aa5925b3d53"
+      sha256 "eee6480bfe0289bc4925bfee169f8753ee7dba6d078184f6d0db45da4cbfafba"
     end
     on_arm do
       url "https://github.com/mmatczuk/jira-mcp/releases/download/v#{version}/jira-mcp_darwin_arm64.tar.gz"
-      sha256 "90e1ee0d7b9c7c0dd3e2ece9555fe2a5ae0bb9b2b737520d18f42f891e9c1dc0"
+      sha256 "2aa38c5fa3695d74f535438968351f7685b580a8bac941b394861ba30f823d70"
     end
   end
 
   on_linux do
     on_intel do
       url "https://github.com/mmatczuk/jira-mcp/releases/download/v#{version}/jira-mcp_linux_amd64.tar.gz"
-      sha256 "4d83fe25529b94a572417f94ee4c63e46d2d70afd26799680341b379f81d6e18"
+      sha256 "a86c828a65e0d4db4d3c31d18c2f82c5d28b6e2e91a3cfb6c9607999cd3801b0"
     end
     on_arm do
       url "https://github.com/mmatczuk/jira-mcp/releases/download/v#{version}/jira-mcp_linux_arm64.tar.gz"
-      sha256 "8ec03316a987f1d1bc48394290150348eec96759cb15ed3ea99a8a62e281b940"
+      sha256 "20a87772dc01da7febd4bde899b6e1d5865056fc31039de50d5a453bf3f76c29"
     end
   end
 
