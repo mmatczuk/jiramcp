@@ -12,6 +12,7 @@ import (
 // test needs; unset methods panic with a clear message.
 type mockClient struct {
 	GetMyselfFn          func(ctx context.Context) (*jira.User, error)
+	SearchUsersFn        func(ctx context.Context, query string) ([]jira.User, error)
 	GetIssueFn           func(ctx context.Context, key string, opts *jira.GetQueryOptions) (*jira.Issue, error)
 	SearchIssuesFn       func(ctx context.Context, jql string, opts *jira.SearchOptionsV3) (*jira.SearchResultV3, error)
 	CreateIssueV3Fn      func(ctx context.Context, payload map[string]any) (string, string, error)
@@ -35,6 +36,13 @@ func (m *mockClient) GetMyself(ctx context.Context) (*jira.User, error) {
 		panic("mockClient.GetMyself called but GetMyselfFn not set")
 	}
 	return m.GetMyselfFn(ctx)
+}
+
+func (m *mockClient) SearchUsers(ctx context.Context, query string) ([]jira.User, error) {
+	if m.SearchUsersFn == nil {
+		panic(fmt.Sprintf("mockClient.SearchUsers called but SearchUsersFn not set (query=%s)", query))
+	}
+	return m.SearchUsersFn(ctx, query)
 }
 
 func (m *mockClient) GetIssue(ctx context.Context, key string, opts *jira.GetQueryOptions) (*jira.Issue, error) {

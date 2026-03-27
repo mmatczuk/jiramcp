@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -64,6 +65,21 @@ func (c *Client) GetMyself(ctx context.Context) (*jira.User, error) {
 		return resp, err
 	})
 	return user, err
+}
+
+// SearchUsers searches for Jira users by display name, email, or other attributes.
+func (c *Client) SearchUsers(ctx context.Context, query string) ([]jira.User, error) {
+	var users []jira.User
+	err := c.retry(ctx, func() (*jira.Response, error) {
+		path := fmt.Sprintf("rest/api/3/user/search?query=%s&maxResults=10", url.QueryEscape(query))
+		req, err := c.j.NewRequestWithContext(ctx, "GET", path, nil)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.j.Do(req, &users)
+		return resp, err
+	})
+	return users, err
 }
 
 // GetIssue fetches an issue by key.

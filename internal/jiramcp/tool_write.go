@@ -18,7 +18,7 @@ type WriteItem struct {
 	Summary     string   `json:"summary,omitempty" jsonschema:"Issue summary/title."`
 	IssueType   string   `json:"issue_type,omitempty" jsonschema:"Issue type name (e.g. Bug, Task, Story, Epic)."`
 	Priority    string   `json:"priority,omitempty" jsonschema:"Priority name (e.g. High, Medium, Low)."`
-	Assignee    string   `json:"assignee,omitempty" jsonschema:"Assignee account ID."`
+	Assignee    string   `json:"assignee,omitempty" jsonschema:"Assignee account ID. Use jira_user_search to find account IDs by name or email."`
 	Description string   `json:"description,omitempty" jsonschema:"Issue description in Markdown. Auto-converted to Atlassian Document Format."`
 	Labels      []string `json:"labels,omitempty" jsonschema:"Issue labels."`
 

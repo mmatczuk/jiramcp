@@ -38,21 +38,24 @@ func NewServer(client JiraClient, currentUser *jira.User, projects *jira.Project
 	mcp.AddTool(s, readTool, h.handleRead)
 	mcp.AddTool(s, writeTool, h.handleWrite)
 	mcp.AddTool(s, schemaTool, h.handleSchema)
+	mcp.AddTool(s, userSearchTool, h.handleUserSearch)
 
 	return s
 }
 
-const serverInstructions = `Jira MCP Server — interact with JIRA Cloud via three tools:
+const serverInstructions = `Jira MCP Server — interact with JIRA Cloud via these tools:
 
 - jira_read: Fetch issues by key, search by JQL, or list resources (projects, boards, sprints, sprint issues).
 - jira_write: Create, update, delete, transition issues; add/edit comments; move issues to sprints. Supports batch (array of items). Always has dry_run option.
 - jira_schema: Discover fields, transitions, field options — metadata needed to construct valid jira_write payloads.
+- jira_user_search: Find users by name or email. Returns account IDs needed for jira_write assignee field.
 
 Workflow tips:
-1. Use jira_schema to discover available fields and transitions before writing.
-2. Use jira_read with JQL for flexible queries.
-3. All jira_write actions support dry_run=true to preview changes without applying them.
-4. Descriptions and comments accept Markdown — they are auto-converted to Atlassian Document Format.`
+1. To assign an issue, first use jira_user_search to find the user's accountId, then pass it to jira_write assignee.
+2. Use jira_schema to discover available fields and transitions before writing.
+3. Use jira_read with JQL for flexible queries.
+4. All jira_write actions support dry_run=true to preview changes without applying them.
+5. Descriptions and comments accept Markdown — they are auto-converted to Atlassian Document Format.`
 
 func formatProjectList(projects jira.ProjectList) string {
 	var b strings.Builder
